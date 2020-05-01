@@ -12,10 +12,10 @@ const UserSchema = new Schema({
         username: {type: String, unique: true, required: true},
         password: {type: String, required: true}
     },
-    friends: {
+    friends: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    },
+    }],
     friendRequestSent: [{
         to: {
             type: mongoose.Schema.Types.ObjectId,

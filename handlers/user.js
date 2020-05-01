@@ -104,9 +104,9 @@ exports.FriendsList = async (req, res, next) => {
         
         var {userId} = req.params
 
-        var user = await db.User.findById(userId, {friends: 1, friendRequestRecieved: 1})
+        var user = await db.User.findById(userId, {friends: 1}).populate('friends')
 
-        res.json({success: true, msg: 'friends found', friends: user.friends, requests: user.friendRequestRecieved})
+        res.json({success: true, msg: 'friends found', friends: user.friends})
 
     } catch (error) {
         console.log(error)
@@ -164,9 +164,50 @@ exports.sendFriendRequest = async (req, res, next) => {
         }, {
             upsert: false
         })
-
         res.json({success: true, msg: 'friend request transfered', from: fromUser, to: toUser})
 
+    } catch (error) {
+        error.status = 400
+        console.log(error)
+    }
+}
+
+exports.RequestAccept = async (req,res,next) => {
+    try {
+        
+        var {to,from} = req.body
+
+        var toUser = await db.User.findOneAndUpdate({_id: to, 'friendRequestRecieved.from': from}, {
+            $set: {
+                'friendRequestRecieved.$.pending': false,
+                'friendRequestRecieved.$.accepted': true,
+            },
+            $push: {
+                friends: from
+            }
+        })
+
+        var fromUser = await db.User.findOneAndUpdate({_id: from, 'friendRequestSent.to': to}, {
+            $set: {
+                'friendRequestSent.$.pending': false,
+                'friendRequestSent.$.accepted': true,
+            },
+            $push: {
+                friends: to
+            }
+        })
+
+        res.json({success: true, msg: 'accepted'})
+
+    } catch (error) {
+        error.status = 400
+        console.log(error)
+    }
+}
+
+exports.RequestReject = async (req,res,next) => {
+    try {
+        
     } catch (error) {
         error.status = 400
         console.log(error)
