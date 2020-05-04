@@ -10,7 +10,7 @@ const RequestSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    status: {type: String}, // P/A/D
+    status: {type: String}, // P
     Date: {type: Date, default: Date.now}
 }, {
     timestamps: true

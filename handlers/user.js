@@ -100,3 +100,84 @@ exports.UserProfile = async (req, res, next) => {
 }
 
 // friends ...
+exports.searchUsername = async (req, res, next) => {
+    try {
+        
+        var {searchedUsername, user} = req.body
+
+        var suser = await db.User.findOne({'cred.username': searchedUsername}, {_id: 1, requests: 1, friends: 1, 'personal.name': 1, 'cred.username': 1})
+
+        if (suser) {
+
+            var status
+
+            if (suser._id === user) {
+                status = 'self'
+            } else {
+                if (suser.friends.includes(user)) {
+                    status = 'friends' // status A
+                } else {
+                    var requestsent = await db.Request.findOne({from: user, to: suser._id}, {status: 1})
+                    var requestrecieved = await db.Request.findOne({from: suser._id, to: user}, {status: 1})
+    
+                    if (requestsent) {
+                        if (requestsent.status === 'P') {
+                            status = 'sentpending'
+                        }
+                    }
+                    if (requestrecieved) {
+                        if (requestrecieved.status === 'P') {
+                            status = 'recievedpending'                                
+                        }
+                    }
+                    if (!status) {
+                        status = 'new'
+                    }          
+                }            
+            }            
+
+            res.json({success: true, msg: 'user found', user: suser, status: status})
+        } else {
+            res.json({success: false, msg: 'no user found'})
+        }
+    } catch (error) {
+        console.log(error)        
+    }
+}
+
+exports.sendFriendRequest = async (req, res, next) => {
+    try {
+        
+        var {from , to} = req.body
+
+        var data = {
+            from: from,
+            to: to,
+            status: 'P'
+        }
+        var user = await db.User.findById(to, {'cred.username': 1, _id: 0})
+
+        var request = new db.Request(data)
+
+        await request.save()
+
+        res.json({request: request, success: true, msg: 'sent', username: user.cred.username})
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+exports.getRequestList = async(req, res, next) => {
+    try {
+        
+        var {to} = req.params
+
+        var list = await db.Request.find({to: to}, {from: 1, _id: 0}).populate('from')
+
+        res.json({success: true, msg: 'list found', list: list})
+
+    } catch (error) {
+        console.log(error)
+    }
+}
