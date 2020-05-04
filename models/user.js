@@ -16,23 +16,9 @@ const UserSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    friendRequestSent: [{
-        to: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        },
-        pending: Boolean, // true: pending, false: done
-        accepted: Boolean, // true: yes / false:rejected
-        date: {type: Date, default: Date.now()}
-    }],
-    friendRequestRecieved: [{
-        from: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        },
-        pending: Boolean, // true: pending, false: done
-        accepted: Boolean, // true: yes / false:rejected
-        date: {type: Date, default: Date.now()}
+    requests: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Request'
     }],
     games: [{
         type: mongoose.Schema.Types.ObjectId,

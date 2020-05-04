@@ -4,12 +4,8 @@ var handle = require('../handlers')
 
 router.post('/register', handle.RegisterUser)
 router.post('/login', handle.LoginUser)
-router.post('/search/username', handle.getUserByUsername)
-router.post('/send/request', handle.sendFriendRequest)
-router.post('/request/accept',handle.RequestAccept)
-router.post('/request/reject',handle.RequestReject)
+
 
 router.get('/profile/:userId', handle.UserProfile)
-router.get('/friends/:userId', handle.FriendsList)
 
 module.exports = router
