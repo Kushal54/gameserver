@@ -22,6 +22,14 @@ exports.createGame = async (req, res, next) => {
         newGame.joined.p2 = false
         newGame.gameIsAlive = true
 
+        var newGameId = newGame._id
+
+        var userUpdate = await db.User.findByIdAndUpdate(creator, {
+            $push: {
+                games: newGameId
+            }
+        })
+
         newGame.save()
 
         res.json(newGame)
@@ -36,7 +44,7 @@ exports.joinGame = async (req, res, next) => {
         
         var {tableNumber, password, joiner} = req.body
 
-        var game = await db.Game.findOne({tableNumber: tableNumber}, {_id: 0, tableNumber: 1, password: 1, 'players.p1': 1}).populate('players.p1')
+        var game = await db.Game.findOne({tableNumber: tableNumber}, {_id: 1, tableNumber: 1, password: 1, 'players.p1': 1}).populate('players.p1')
         console.log(game)
         if (game) {
             
@@ -57,7 +65,13 @@ exports.joinGame = async (req, res, next) => {
                         }
                     }, {upsert: false})
 
-                    res.json({success: true, msg: 'game created', gameUpdated: gameUpdated})
+                    var userUpdate = await db.User.findByIdAndUpdate(joiner, {
+                        $push: {
+                            games: game._id
+                        }
+                    })
+
+                    res.json({success: true, msg: 'game joined', gameUpdated: gameUpdated})
 
                 } else {
                     res.json({success: false, msg: 'you are not friends with '+game.players.p1.cred.username+'.'})
@@ -87,5 +101,49 @@ exports.closeGame = async (req, res, next) => {
 
     } catch (error) {
         console.log(error)
+    }
+}
+
+exports.getActiveGames = async (req, res, next) => {
+    try {
+        
+        var {userId} = req.body
+
+        var user = await db.User.findById(userId).populate('games')
+
+        var games = []
+
+        user.games.forEach(g => {
+            if (g.gameIsAlive) {
+                games.push(g)
+            }
+        });
+
+        res.json({games, success: true, msg: 'active games found'})
+
+    } catch (error) {
+        console.log(error)        
+    }
+}
+
+exports.getClosedGames = async (req, res, next) => {
+    try {
+        
+        var {userId} = req.body
+
+        var user = await db.User.findById(userId).populate('games')
+
+        var games = []
+
+        user.games.forEach(g => {
+            if (!g.gameIsAlive) {
+                games.push(g)
+            }
+        });
+
+        res.json({games, success: true, msg: 'closed games found'})
+
+    } catch (error) {
+        console.log(error)        
     }
 }
