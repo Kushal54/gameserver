@@ -23,6 +23,7 @@ app.get('/:id', (req, res, next) => {
 })
 
 app.use('/user', routes.user)
+app.use('/game', routes.game)
 
 // app.use(handle.notFound)
 // app.use(handle.errors)

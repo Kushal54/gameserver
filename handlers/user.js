@@ -175,9 +175,47 @@ exports.getRequestList = async(req, res, next) => {
 
         var list = await db.Request.find({to: to}, {from: 1, _id: 0}).populate('from')
 
-        res.json({success: true, msg: 'list found', list: list})
+        res.json({success: true, msg: 'list sent', list: list})
 
     } catch (error) {
         console.log(error)
+    }
+}
+
+exports.acceptRequest = async(req,res,next) => {
+    try {
+        var {to,from} = req.body
+        await db.Request.deleteOne({to : to, from : from})
+        await db.User.findByIdAndUpdate(to,{$push : {friends : from}})
+        await db.User.findByIdAndUpdate(from,{$push : {friends : to}})
+
+        res.json({success: true, msg: 'friend request accepted'})
+
+    } catch (error) {
+        console.log(error)        
+    }
+}
+exports.declineRequest = async(req,res,next) => {
+    try {
+        var {to,from} = req.body
+        await db.Request.deleteOne({to : to, from : from})
+
+        res.json({success: true, msg: 'friend request rejected'})
+    } catch (error) {
+        console.log(error)  
+
+        
+    }
+}
+
+exports.getFriendsList = async(req,res,next) => {
+    try {
+        console.log("hi")
+        var {user} = req.body
+        var flist = await db.User.findById(user, {friends: 1, _id: 0}).populate('friends')
+        res.json({success: true, msg: 'friends list sent', flist: flist})
+
+    } catch (error) {
+        console.log(error)  
     }
 }

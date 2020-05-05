@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const GameSchema = new Schema({
     tableNumber: {type: Number, required: true, unique: true},
+    password: {type: Number, required: true},
     players: {
         p1: {
             type: mongoose.Schema.Types.ObjectId,
@@ -18,8 +19,8 @@ const GameSchema = new Schema({
         p2: Boolean
     },
     scores: {
-        p1: {type: Number, defaule: 0},
-        p2: {type: Number, defaule: 0}
+        p1: {type: Number, default: 0},
+        p2: {type: Number, default: 0}
     },
     cards: [{
         question: {type: String, required: true},
