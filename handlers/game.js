@@ -44,7 +44,7 @@ exports.joinGame = async (req, res, next) => {
         
         var {tableNumber, password, joiner} = req.body
 
-        var game = await db.Game.findOne({tableNumber: tableNumber}, {_id: 1, tableNumber: 1, password: 1, 'players.p1': 1}).populate('players.p1')
+        var game = await db.Game.findOne({tableNumber: tableNumber}, {_id: 1, tableNumber: 1, password: 1, 'players.p1': 1, gameIsAlive: 1}).populate('players.p1')
         console.log(game)
         if (game) {
             
@@ -52,26 +52,36 @@ exports.joinGame = async (req, res, next) => {
                 
                 if (game.players.p1.friends.includes(joiner)) {
                     
-                    var gameUpdated = await db.Game.findOneAndUpdate({tableNumber: tableNumber}, {
-                        $set: {
-                            players: {
-                                p1: game.players.p1,
-                                p2: joiner
-                            },
-                            joined: {
-                                p1: true,
-                                p2: true
-                            }
+                    if (game.gameIsAlive) {
+                        
+                        if (!("p2" in game.players)) {
+                            var gameUpdated = await db.Game.findOneAndUpdate({tableNumber: tableNumber}, {
+                                $set: {
+                                    players: {
+                                        p1: game.players.p1,
+                                        p2: joiner
+                                    },
+                                    joined: {
+                                        p1: true,
+                                        p2: true
+                                    }
+                                }
+                            }, {upsert: false})
+        
+                            var userUpdate = await db.User.findByIdAndUpdate(joiner, {
+                                $push: {
+                                    games: game._id
+                                }
+                            })
+        
+                            res.json({success: true, msg: 'game joined', gameUpdated: gameUpdated})
+                        } else {
+                            res.json({success: false, msg: 'table full'})
                         }
-                    }, {upsert: false})
 
-                    var userUpdate = await db.User.findByIdAndUpdate(joiner, {
-                        $push: {
-                            games: game._id
-                        }
-                    })
-
-                    res.json({success: true, msg: 'game joined', gameUpdated: gameUpdated})
+                    } else {
+                        res.json({success: false, msg: 'game has been closed'})
+                    }
 
                 } else {
                     res.json({success: false, msg: 'you are not friends with '+game.players.p1.cred.username+'.'})
@@ -93,11 +103,18 @@ exports.joinGame = async (req, res, next) => {
 exports.closeGame = async (req, res, next) => {
     try {
         
-        var {tableNumber} = req.body
+        var {tableNumber, creator} = req.body
 
-        var game = await db.Game.findOneAndUpdate({tableNumber: tableNumber}, {$set: {gameIsAlive: false}}, {upsert: false})
+        var game = await db.Game.findOne({tableNumber: tableNumber}, {'players.p1': 1})
 
-        res.json({success: true, msg: 'game is closed', game: game})
+        if (game.players.p1.toString() === creator) {
+            var gameUpdated = await db.Game.findOneAndUpdate({tableNumber: tableNumber}, {$set: {gameIsAlive: false}}, {upsert: false})
+            
+            res.json({success: true, msg: 'game is closed', game: gameUpdated})
+        } else {
+            res.json({success: false, msg: 'only creator can close it', game: game})            
+        }
+
 
     } catch (error) {
         console.log(error)
