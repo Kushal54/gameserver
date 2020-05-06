@@ -32,7 +32,7 @@ exports.createGame = async (req, res, next) => {
 
         newGame.save()
 
-        res.json(newGame)
+        res.json({newGame: newGame, success: true, msg: 'created new game'})
 
     } catch (error) {
         console.log(error)
@@ -44,7 +44,7 @@ exports.joinGame = async (req, res, next) => {
         
         var {tableNumber, password, joiner} = req.body
 
-        var game = await db.Game.findOne({tableNumber: tableNumber}, {_id: 1, tableNumber: 1, password: 1, 'players.p1': 1, gameIsAlive: 1}).populate('players.p1')
+        var game = await db.Game.findOne({tableNumber: tableNumber}, {_id: 1, tableNumber: 1, password: 1, joined: 1, players: 1, gameIsAlive: 1}).populate('players.p1')
         console.log(game)
         if (game) {
             
@@ -54,7 +54,7 @@ exports.joinGame = async (req, res, next) => {
                     
                     if (game.gameIsAlive) {
                         
-                        if (!("p2" in game.players)) {
+                        if (!(game.joined.p2)) {
                             var gameUpdated = await db.Game.findOneAndUpdate({tableNumber: tableNumber}, {
                                 $set: {
                                     players: {
@@ -103,16 +103,16 @@ exports.joinGame = async (req, res, next) => {
 exports.closeGame = async (req, res, next) => {
     try {
         
-        var {tableNumber, creator} = req.body
+        var {tableNumber, userId} = req.body
 
         var game = await db.Game.findOne({tableNumber: tableNumber}, {'players.p1': 1})
 
-        if (game.players.p1.toString() === creator) {
+        if (game.players.p1.toString() === userId || game.players.p2.toString() === userId ) {
             var gameUpdated = await db.Game.findOneAndUpdate({tableNumber: tableNumber}, {$set: {gameIsAlive: false}}, {upsert: false})
             
             res.json({success: true, msg: 'game is closed', game: gameUpdated})
         } else {
-            res.json({success: false, msg: 'only creator can close it', game: game})            
+            res.json({success: false, msg: 'ye scheme tere liye h hi ni, tu ja yahan se', game: game})            
         }
 
 
@@ -162,5 +162,28 @@ exports.getClosedGames = async (req, res, next) => {
 
     } catch (error) {
         console.log(error)        
+    }
+}
+
+exports.getGame = async (req, res, next) => {
+    try {
+
+        var {userId, gameId } = req.body
+
+        var game = await db.Game.findById(gameId)
+
+        if (game) {
+            if (game.players.p1.toString() === userId || game.players.p2.toString() === userId) {
+                res.json({game: game, success: true, msg: 'game found'})
+            } else {
+                res.json({success: false, msg: 'ye scheme tere liye nai h'})
+            }
+        } else {
+            res.json({success: false, msg: 'no game found'})
+        }
+        
+    } catch (error) {
+        console.log(error)        
+        
     }
 }

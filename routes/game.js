@@ -7,5 +7,6 @@ router.post('/join', handle.joinGame)
 router.post('/close', handle.closeGame)
 router.post('/active', handle.getActiveGames)
 router.post('/closed', handle.getClosedGames)
+router.post('/getGame', handle.getGame)
 
 module.exports = router
