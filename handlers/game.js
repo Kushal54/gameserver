@@ -187,3 +187,32 @@ exports.getGame = async (req, res, next) => {
         
     }
 }
+
+exports.askQuestion = async (req, res, next) => {
+    try {
+        var {question, userId, answers, find, tableNumber} = req.body
+
+        var game = await db.Game.findOne({tableNumber: tableNumber}, {cards: 1, players: 1})
+        console.log(game);
+        
+        if (game.cards.length === 0) {
+            
+            // p1's turn
+            if (game.players.p1.toString() === userId) {
+                console.log('asked by correct user');                
+            } else {
+                console.log('p1 should be asking');
+            }
+
+        } else {
+            // check whose turn was last
+            console.log('check whose turn was last');
+            
+        }
+
+        res.json(req.body)
+    } catch (error) {
+        console.log(error);
+        
+    }
+}
